@@ -1,0 +1,52 @@
+{
+	"id": "nodebb-plugin-new-order",
+	"url": "https://uruglobal.com",
+	"library": "./library.js",
+	"hooks": [
+		{
+			"hook": "static:app.load", "method": "init"
+		},
+		{
+			"hook": "filter:admin.header.build", "method": "addAdminNavigation"
+		},
+		{
+			"hook": "filter:post.create",
+			"method": "unreadOmmitment"
+		},
+		{
+			"hook": "filter:post.getPosts",
+			"method": "parse", "callbacked": true
+		},
+		{
+			"hook": "filter:post.create",
+			"method": "addOrder", "callbacked": true
+		},
+		{
+			"hook": "action:post.save",
+			"method": "getSaved"
+		},
+		{
+			"hook": "filter:post.get",
+			"method": "getPost", "callbacked": true
+		},
+		{
+			"hook": "action:topic.reply",
+			"method": "topicReply"
+		}
+	],
+	"staticDirs": {
+		"static": "./static"
+	},
+	"less": [
+		"static/style.less"
+	],
+
+	"scripts": [
+		"static/lib/main.js"
+	],
+	"acpScripts": [
+		"static/lib/admin.js"
+	],
+	"templates": "static/templates",
+	"languages": "languages"
+}

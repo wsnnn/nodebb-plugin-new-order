@@ -1,0 +1,20 @@
+/* Place any LESS in here */
+@postmargin: 3em;
+//TODO Изменить отступ для media < 960
+.level-generator(@index: 1, @margin) when (@index <= 12) {
+
+  // Конструируем класс на основе полученных данных
+  .postlevel-@{index} {
+    margin-left: @margin * @index;
+  }
+
+  // Рекурсия
+  .level-generator(@index + 1, @margin);
+}
+
+.level-generator(@margin: @postmargin);
+
+
+@media (max-width: @screen-sm-min) {
+  .level-generator(@margin: 1.2em);
+}
