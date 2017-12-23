@@ -23,7 +23,7 @@ $(document).ready(function() {
 	"use strict";
 
 	$(window).on('action:topic.loaded', function (event, data) {
-		resortComments();
+		//resortComments();
 		console.log('action:topic.loaded'+data);
 	});
 

@@ -202,7 +202,7 @@ var posts = module.parent.require('./posts');
 
 
 var controllers = require('./lib/controllers'),
-    //Таблица соотношения уровня и кода сортировки. Начинается с 0
+    //РўР°Р±Р»РёС†Р° СЃРѕРѕС‚РЅРѕС€РµРЅРёСЏ СѓСЂРѕРІРЅСЏ Рё РєРѕРґР° СЃРѕСЂС‚РёСЂРѕРІРєРё. РќР°С‡РёРЅР°РµС‚СЃСЏ СЃ 0
     levelTable = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n'],
 	plugin = {};
 
@@ -220,9 +220,6 @@ plugin.init = function(params, callback) {
 	callback();
 };
 
-
-
-
 plugin.addAdminNavigation = function(header, callback) {
 	header.plugins.push({
 		route: '/plugins/quickstart',
@@ -232,7 +229,6 @@ plugin.addAdminNavigation = function(header, callback) {
 
 	callback(null, header);
 };
-
 
 plugin.topicReply = function(postData, callback){
     console.log("action:topic.reply");
@@ -246,58 +242,62 @@ plugin.getPost= function(postData, callback){
     callback(null, postData);
 }
 
-
 plugin.getSaved = function(postData, callback) {
     console.log("action:post.save");
     console.log(postData);
     //callback(null, postData);
 }
 
-plugin.addOrder = function(postData, callback) {
-	console.log("plugin.addOrder");
 
-	//var isA_level = (!postData.post.isMain && !postData.data.toPid) ? true : false;
+/**
+ * Р’С‹Р·С‹РІР°РµС‚СЃСЏ РїСЂРё СЃРѕР·РґР°РЅРёРё РЅРѕРІРѕРіРѕ РїРѕСЃС‚Р°
+ *
+ * Р“РµРЅРµСЂРёСЂСѓРµС‚СЃСЏ СѓСЂРѕРІРµРЅСЊ РІР»РѕР¶РµРЅРЅРѕСЃС‚Рё, Р·Р°С‚РµРј РєРѕРґ СЃРѕСЂС‚РёСЂРѕРІРєРё Рё РїРѕСЃС‚ РґРѕР±Р°РІР»СЏРµС‚СЃСЏ Рє РёРЅРґРµРєСЃСѓ СЃРѕСЂС‚РёСЂРѕРІРєРё С‚РѕРїРёРєР°
+ *
+ * @param postData
+ * @param callback
+ */
+plugin.addOrder = function(postData, callback) {
     var isMain = false;
 
-
-    //postData.data.toPid
-    postData.post.orderParentCode = '';//если null, то код А и уровень 0
-
-
-    //если нет parent, то инкрементить orderReplies для main
-    postData.post.orderReplies = 0; //для нового ответа всегда 0
+    //РµСЃР»Рё РЅРµС‚ parent, С‚Рѕ РёРЅРєСЂРµРјРµРЅС‚РёС‚СЊ orderReplies РґР»СЏ main
+    postData.post.orderReplies = 0; //РґР»СЏ РЅРѕРІРѕРіРѕ РѕС‚РІРµС‚Р° РІСЃРµРіРґР° 0
 
 	var orderCollection = {};
 
     async.waterfall([
         function (next) {
-            //Проверка на топикстартер
+            //РџСЂРѕРІРµСЂРєР° РЅР° С‚РѕРїРёРєСЃС‚Р°СЂС‚РµСЂ
             topics.getTopicField(postData.post.tid, 'mainPid', next);
         },
         function (ismain, next) {
             isMain = (ismain > 0)? false : true ;
-            //Уровень вложенности
+            //РЈСЂРѕРІРµРЅСЊ РІР»РѕР¶РµРЅРЅРѕСЃС‚Рё
             generateOrderLevel(isMain, postData.data.toPid, next);
         },
         function (orderLevel, next) {
             orderCollection.level = orderLevel;
-            //Код сортировки orderCode
+            //РљРѕРґ СЃРѕСЂС‚РёСЂРѕРІРєРё orderCode
             generateOrderCode(isMain,postData.post.tid, postData.data.toPid, orderLevel, next);
         },
-        function (orderCode, next) {
-            orderCollection.code = orderCode;
-            //db.sortedSetAdd('tid:' + postData.post.tid + ':posts:order', orderCode, postData.post.pid, errCallb);
-            db.sortedSetAdd('tid:' + postData.post.tid + ':posts:order', 0, orderCode+':'+postData.post.pid, errCallb);
-            //db.sortedSetAdd('tid:' + postData.post.tid + ':posts:order', 0, orderCode+':pid:'+postData.post.pid, errCallb);
-            //db.sortedSetAdd('pid:'+postData.post.pid+ ':posts:order', 0, orderCode, errCallb);
-            //db.sortedSetAdd('uid:' + postData.uid + ':posts:order', postData.orderCode, postData.pid, next);
+        function (data, next) {
+            orderCollection.code = data.code;
+            orderCollection.parentCode = data.parentCode? data.parentCode: '';
+
+            //Р”РѕР±Р°РІР»СЏРµРј РїРѕСЃС‚ РІ РёРЅРґРµРєСЃ, С‚РѕР»СЊРєРѕ РЅРµ РіР»Р°РІРЅС‹Р№
+            if(!isMain){
+                db.sortedSetAdd('tid:' + postData.post.tid + ':posts:order', 0, data.code+':'+postData.post.pid, errCallb);
+            }
             next(null, orderCollection);
         },
         function (data, next) {
-            console.log("colletIsDone");
-            console.log(data);
             postData.post.orderLevel = data.level;
             postData.post.orderCode = data.code;
+            postData.post.orderParentCode = data.parentCode;
+
+            console.log("plugin.addOrder is done");
+            console.log(data);
+
             next(null, postData);
         },
 
@@ -305,7 +305,7 @@ plugin.addOrder = function(postData, callback) {
 
 
     function errCallb(err, res) {
-        console.log(err);
+        if (err) console.log(err);
     }
 	//callback(null, postData);
 }
@@ -317,14 +317,14 @@ plugin.addOrder = function(postData, callback) {
 
 
 /**
- * Генерация уровня вложенности
- * @param bool isA_level Если первый уровень
+ * Р“РµРЅРµСЂР°С†РёСЏ СѓСЂРѕРІРЅСЏ РІР»РѕР¶РµРЅРЅРѕСЃС‚Рё
+ * @param bool isA_level Р•СЃР»Рё РїРµСЂРІС‹Р№ СѓСЂРѕРІРµРЅСЊ
  * @param int parentId
- * @param int callback номер уровня вложенности
+ * @param int callback РЅРѕРјРµСЂ СѓСЂРѕРІРЅСЏ РІР»РѕР¶РµРЅРЅРѕСЃС‚Рё
  */
 function generateOrderLevel(isMain, parentId, callback) {
     if(!parentId){
-    	//Для ответов на главный топик всегда 0
+    	//Р”Р»СЏ РѕС‚РІРµС‚РѕРІ РЅР° РіР»Р°РІРЅС‹Р№ С‚РѕРїРёРє РІСЃРµРіРґР° 0
         callback(null, 0);
         return;
 	}
@@ -342,42 +342,42 @@ function generateOrderLevel(isMain, parentId, callback) {
 
 
 /**
- * Генерация кода сортировки a1b2
- * @param isA_level  Первый уровень, кроме главного
- * @param tid id топика
+ * Р“РµРЅРµСЂР°С†РёСЏ РєРѕРґР° СЃРѕСЂС‚РёСЂРѕРІРєРё a1b2
+ * @param isA_level  РџРµСЂРІС‹Р№ СѓСЂРѕРІРµРЅСЊ, РєСЂРѕРјРµ РіР»Р°РІРЅРѕРіРѕ
+ * @param tid id С‚РѕРїРёРєР°
  * @param parentId
- * @param orderLevel уровень вложенности
- * @param callback код a1
+ * @param orderLevel СѓСЂРѕРІРµРЅСЊ РІР»РѕР¶РµРЅРЅРѕСЃС‚Рё
+ * @param object callback {code:'a1b1', parentCode: 'a1'}
  */
 function generateOrderCode(isMain, tid, parentId, orderLevel, callback) {
     
-    //Триггер для всех комментов первого уровня, кроме главного
+    //РўСЂРёРіРіРµСЂ РґР»СЏ РІСЃРµС… РєРѕРјРјРµРЅС‚РѕРІ РїРµСЂРІРѕРіРѕ СѓСЂРѕРІРЅСЏ, РєСЂРѕРјРµ РіР»Р°РІРЅРѕРіРѕ
     if(!parentId){
         async.waterfall([
             function (next) {
-                //Получение pid для главного поста
+                //РџРѕР»СѓС‡РµРЅРёРµ pid РґР»СЏ РіР»Р°РІРЅРѕРіРѕ РїРѕСЃС‚Р°
                 incrMainPost(tid,next);
             },
             function (orderReplies, next) {
             var tmpNum = isMain? 0: orderReplies;
-                next(null, 'a'+tmpNum);
+                next(null, {code:'a'+tmpNum, parentCode: null});
             }
         ], callback);
         return;
     } else{
-        //TODO Генерация для остальных уровней
+        //TODO Р“РµРЅРµСЂР°С†РёСЏ РґР»СЏ РѕСЃС‚Р°Р»СЊРЅС‹С… СѓСЂРѕРІРЅРµР№
         async.waterfall([
             function (next) {
-                //Инкремент ответов родителю
+                //РРЅРєСЂРµРјРµРЅС‚ РѕС‚РІРµС‚РѕРІ СЂРѕРґРёС‚РµР»СЋ
                 db.incrObjectField('post:' + parentId, 'orderReplies',next);
             },
             function (orderReplies, next) {
                 async.parallel({
-                    //Свой код
+                    //РЎРІРѕР№ РєРѕРґ
                     code: function (next) {
                         next(null, levelTable[parseInt(orderLevel, 10)]+orderReplies);
                     },
-                    //Код родителя
+                    //РљРѕРґ СЂРѕРґРёС‚РµР»СЏ
                     parentCode: function (next) {
                         posts.getPostField(parentId, 'orderCode', next );
 
@@ -387,8 +387,8 @@ function generateOrderCode(isMain, tid, parentId, orderLevel, callback) {
             function (results, next) {
                 console.log("results");
                 console.log(results);
-                //Склейка родительского и своего кода
-                next(null, results.parentCode+results.code);
+                //РЎРєР»РµР№РєР° СЂРѕРґРёС‚РµР»СЊСЃРєРѕРіРѕ Рё СЃРІРѕРµРіРѕ РєРѕРґР°
+                next(null, {code:results.parentCode+results.code, parentCode: results.parentCode});
             }
         ], callback);
 	}
@@ -398,23 +398,23 @@ function generateOrderCode(isMain, tid, parentId, orderLevel, callback) {
 
 
 /**
- * Инкремент кол-ва ответов для главного поста
+ * РРЅРєСЂРµРјРµРЅС‚ РєРѕР»-РІР° РѕС‚РІРµС‚РѕРІ РґР»СЏ РіР»Р°РІРЅРѕРіРѕ РїРѕСЃС‚Р°
  * @param tid
- * @param callback Возвращает кол-ва ответов
+ * @param callback Р’РѕР·РІСЂР°С‰Р°РµС‚ РєРѕР»-РІР° РѕС‚РІРµС‚РѕРІ
  */
 function incrMainPost(tid, callback) {
 
     async.waterfall([
         function (next) {
-    		//Получение pid для главного поста
+    		//РџРѕР»СѓС‡РµРЅРёРµ pid РґР»СЏ РіР»Р°РІРЅРѕРіРѕ РїРѕСЃС‚Р°
             topics.getTopicField(tid, 'mainPid',next);
         },
         function (pid, next) {
-    		//Инкремент кол-ва ответов для главного поста
+    		//РРЅРєСЂРµРјРµРЅС‚ РєРѕР»-РІР° РѕС‚РІРµС‚РѕРІ РґР»СЏ РіР»Р°РІРЅРѕРіРѕ РїРѕСЃС‚Р°
             db.incrObjectField('post:' + pid, 'orderReplies',next);
         }
 		/*function (data, next) {
-    		//Получение кол-ва ответов orderReplies главного поста
+    		//РџРѕР»СѓС‡РµРЅРёРµ РєРѕР»-РІР° РѕС‚РІРµС‚РѕРІ orderReplies РіР»Р°РІРЅРѕРіРѕ РїРѕСЃС‚Р°
             console.log(data);
             posts.getTopicField(tid,orderReplies,next);
             //topics.getMainPost(tid, 1,next);

@@ -33,7 +33,7 @@
 
 		<ul component="topic" class="posts" data-tid="{tid}" data-cid="{cid}">
 			<!-- BEGIN posts -->
-				<li component="post" data-orderCode="{posts.orderCode}" class="<!-- IF isTree -->postlevel-{posts.orderLevel}<!-- ENDIF isTree --> <!-- IF posts.deleted -->deleted<!-- ENDIF posts.deleted -->" <!-- IMPORT partials/data/topic.tpl -->>
+				<li component="post" data-orderCode="{posts.orderCode}"  <!-- IF posts.orderParentCode -->data-orderParentCode="{posts.orderParentCode}"<!-- ENDIF posts.orderParentCode -->  class="<!-- IF config.isTopicPostSortTree -->postlevel-{posts.orderLevel}<!-- ENDIF config.isTopicPostSortTree --> <!-- IF posts.deleted -->deleted<!-- ENDIF posts.deleted -->" <!-- IMPORT partials/data/topic.tpl -->>
 					<a component="post/anchor" data-index="{posts.index}" id="{posts.index}"></a>
 
 					<meta itemprop="datePublished" content="{posts.timestampISO}">
