@@ -1,0 +1,29 @@
+{
+  "name": "nodebb-plugin-new-order",
+  "version": "0.0.1",
+  "description": "Tree order for comments",
+  "main": "library.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wsnnn/nodebb-plugin-new-order"
+  },
+  "keywords": [
+    "nodebb",
+    "plugin",
+    "new-order",
+    "tree",
+    "comments"
+  ],
+  "author": {
+    "name": "wsnnn",
+    "email": ""
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/wsnnn/nodebb-plugin-new-order/issues"
+  },
+  "readmeFilename": "README.md",
+  "nbbpm": {
+    "compatibility": "^1.0.0"
+  }
+}
